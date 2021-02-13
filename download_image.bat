@@ -1,0 +1,1 @@
+python.exe ./download_twitter_favorite_images.py download --username ionicbond3 --output_dir ../Image/ --log_path ./download_twitter_favorite_images.log
