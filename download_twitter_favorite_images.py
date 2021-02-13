@@ -16,9 +16,17 @@ def get_headers():
     return {"Authorization": "Bearer {}".format(token)}
 
 
+def get_proxies():
+    proxies = {}
+    https_proxy = os.environ.get("HTTPS_PROXY")
+    if https_proxy:
+        proxies["https"] = https_proxy
+    return proxies
+
+
 def send_get_request(url: str, params: dict={}):
-    headers = get_headers()
-    response = requests.request("GET", url, headers=headers, params=params)
+    response = requests.request(
+        "GET", url, headers=get_headers(), params=params, proxies=get_proxies())
     while response.status_code != 200:
         logging.error("Request returned an error: {} {}".format(
             response.status_code, response.text))
@@ -55,7 +63,7 @@ def download_image(output_dir: str, image_url: str):
         logging.warning('{} already exists, skip.'.format(output_path))
         return
     logging.info('Downloading image {} to {}'.format(image_url, output_path))
-    r = requests.get(image_url)
+    r = requests.get(image_url, proxies=get_proxies())
     with open(output_path, "wb") as f:
         f.write(r.content)
 
