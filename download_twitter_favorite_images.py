@@ -62,8 +62,9 @@ def download_image(output_dir: str, image_url: str):
     if os.path.exists(output_path):
         logging.warning('{} already exists, skip.'.format(output_path))
         return
-    logging.info('Downloading image {} to {}'.format(image_url, output_path))
-    r = requests.get(image_url, proxies=get_proxies())
+    orig_image_url = '{}?name=orig'.format(image_url)
+    logging.info('Downloading image {} to {}'.format(orig_image_url, output_path))
+    r = requests.get(orig_image_url, proxies=get_proxies())
     with open(output_path, "wb") as f:
         f.write(r.content)
 
