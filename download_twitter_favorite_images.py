@@ -40,20 +40,22 @@ def get_favorite_tweets(username: str, max_search_number: int):
     return send_get_request(url)
 
 
-def read_last_end_id(username: str):
-    filename = '{}.last_end_id'.format(username)
+def read_prossesed_ids(username: str):
+    processed_ids = set()
+    filename = '{}.processed_ids'.format(username)
     if not os.path.exists(filename):
         logging.error('{} not exists, will download all images.'.format(filename))
-        return None
+        return processed_ids
     with open(filename, 'r') as f:
-        last_end_id = int(f.read())
-        return last_end_id
+        for processed_id in f:
+            processed_ids.add(int(processed_id))
+    return processed_ids
 
 
-def write_last_end_id(username: str, last_end_id: int):
-    filename = '{}.last_end_id'.format(username)
-    with open(filename, 'w') as f:
-        f.write(str(last_end_id))
+def write_processed_id(username: str, processed_id: int):
+    filename = '{}.processed_ids'.format(username)
+    with open(filename, 'a') as f:
+        f.write('{}\n'.format(str(processed_id)))
 
 
 def download_image(output_dir: str, image_url: str):
@@ -69,39 +71,61 @@ def download_image(output_dir: str, image_url: str):
         f.write(r.content)
 
 
+def get_existed_images(scan_dir: str):
+    existed_images = set()
+    for file_name in os.listdir(scan_dir):
+        file_path = os.path.join(scan_dir, file_name)
+        if os.path.isdir(file_path):
+            existed_images = existed_images | get_existed_images(file_path)
+        else:
+            splits = file_name.split('.')
+            if len(splits) == 2 and splits[1] in ['jpg', 'png'] and len(splits[0]) == 15:
+                existed_images.add(file_name)
+    return existed_images
+
+
 @cli.command()
 @click.option('--username', required=True, help="")
-@click.option('--max_search_number', default=50, help="")
+@click.option('--max_search_number', default=200, help="")
 @click.option('--output_dir', default='./output/', help="")
+@click.option('--scan_dirs', default='./', help="")
 @click.option('--log_path',
               default='./download_twitter_favorite_images.log',
               help="Path to output logging's log.")
-def download(username, max_search_number, output_dir, log_path):
+def download(username, max_search_number, output_dir, scan_dirs, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
 
-    last_end_id = read_last_end_id(username)
-    logging.info('Download starts, last end id: {}'.format(last_end_id))
+    processed_ids = read_prossesed_ids(username)
+    logging.info('Processed ids num: {}'.format(len(processed_ids)))
+
+    existed_images = set()
+    for scan_dir in scan_dirs.split(','):
+        existed_images = existed_images | get_existed_images(scan_dir)
+    logging.info('existed images num: {}'.format(len(existed_images)))
+
     image_urls = []
 
     favorite_tweets = get_favorite_tweets(username, max_search_number)
     for favorite_tweet in favorite_tweets:
-        if favorite_tweet['id'] == last_end_id:
-            logging.info('Meet last end id: {}, stop searching.'.format(last_end_id))
-            break
+        if favorite_tweet['id'] in processed_ids:
+            continue
+        write_processed_id(username, favorite_tweet['id'])
         medias = favorite_tweet.get('extended_entities', {}).get('media', [])
         for media in medias:
+            media_name = media['media_url_https'].split('/')[-1]
+            if media_name in existed_images:
+                continue
             media_type = media.get('type', '')
-            if media_type == 'photo':
-                image_urls.append(media['media_url_https'])
-            else:
+            if media_type != 'photo':
                 logging.error('Unsupport media type: {}, tweet url: {}'.format(
                     media_type, media['url']))
+                continue
+
+            image_urls.append(media['media_url_https'])
 
     for image_url in image_urls:
         download_image(output_dir, image_url)
-
-    write_last_end_id(username, favorite_tweets[0]['id'])
 
 
 if __name__ == "__main__":
