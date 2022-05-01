@@ -30,7 +30,7 @@ def send_get_request(url: str, params: dict={}):
     while response.status_code != 200:
         logging.error("Request returned an error: {} {}".format(
             response.status_code, response.text))
-        response = requests.request("GET", url, headers=headers, params=params)
+        response = requests.request("GET", url, headers=get_headers(), params=params, proxies=get_proxies())
     return response.json()
 
 

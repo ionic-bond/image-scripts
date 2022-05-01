@@ -21,7 +21,7 @@ def get_proxies():
 
 def check_image(file_dir, file_name):
     file_path = os.path.join(file_dir, file_name)
-    split = suf=file_name.split('.')
+    split = file_name.split('.')
     if len(split) != 2:
         logging.error('Unknow file: {}'.format(file_path))
         return
