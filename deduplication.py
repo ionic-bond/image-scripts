@@ -50,7 +50,7 @@ def run(scan_dir):
     images = {}
     for img in sorted(image_filenames):
         try:
-            hash = imagehash.whash(Image.open(img))
+            hash = imagehash.average_hash(Image.open(img))
         except Exception as e:
             print('Problem:', e, 'with', img)
             continue

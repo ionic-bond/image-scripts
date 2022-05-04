@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import click
+import json
 import logging
 import os
 import requests
@@ -34,10 +35,21 @@ def send_get_request(url: str, params: dict={}):
     return response.json()
 
 
-def get_favorite_tweets(username: str, max_search_number: int):
-    url = "https://api.twitter.com/1.1/favorites/list.json?count={}&screen_name={}".format(
-        max_search_number, username)
-    return send_get_request(url)
+def get_favorite_tweets(username: str):
+    result = []
+    url = "https://api.twitter.com/1.1/favorites/list.json?count=200&screen_name={}".format(username)
+    favorite_tweets = send_get_request(url)
+    result.extend(favorite_tweets)
+    for _ in range(4):
+        if not favorite_tweets:
+            break
+        min_id = min(favorite_tweet['id'] for favorite_tweet in favorite_tweets)
+        print(min_id)
+        url = "https://api.twitter.com/1.1/favorites/list.json?count=200&screen_name={}&max_id={}".format(username, min_id - 1)
+        favorite_tweets = send_get_request(url)
+        result.extend(favorite_tweets)
+    print(len(result))
+    return result
 
 
 def read_prossesed_ids(username: str):
@@ -65,6 +77,7 @@ def download_image(output_dir: str, image_url: str):
         logging.warning('{} already exists, skip.'.format(output_path))
         return
     orig_image_url = '{}?name=orig'.format(image_url)
+    print('Downloading image {} to {}'.format(orig_image_url, output_path))
     logging.info('Downloading image {} to {}'.format(orig_image_url, output_path))
     r = requests.get(orig_image_url, proxies=get_proxies())
     with open(output_path, "wb") as f:
@@ -86,13 +99,12 @@ def get_existed_images(scan_dir: str):
 
 @cli.command()
 @click.option('--username', required=True, help="")
-@click.option('--max_search_number', default=200, help="")
 @click.option('--output_dir', default='./output/', help="")
 @click.option('--scan_dirs', default='./', help="")
 @click.option('--log_path',
-              default='./download_twitter_favorite_images.log',
+              default='./download_user_like_images.log',
               help="Path to output logging's log.")
-def download(username, max_search_number, output_dir, scan_dirs, log_path):
+def download_user_like_images(username, output_dir, scan_dirs, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
 
@@ -106,7 +118,7 @@ def download(username, max_search_number, output_dir, scan_dirs, log_path):
 
     image_urls = []
 
-    favorite_tweets = get_favorite_tweets(username, max_search_number)
+    favorite_tweets = get_favorite_tweets(username)
     for favorite_tweet in favorite_tweets:
         if favorite_tweet['id'] in processed_ids:
             continue
@@ -121,7 +133,47 @@ def download(username, max_search_number, output_dir, scan_dirs, log_path):
                 logging.error('Unsupport media type: {}, tweet url: {}'.format(
                     media_type, media['url']))
                 continue
+            image_urls.append(media['media_url_https'])
 
+    for image_url in image_urls:
+        download_image(output_dir, image_url)
+
+
+def get_tweets(username: str):
+    result = []
+    url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=200&screen_name={}&trim_user=false&include_rts=false".format(username)
+    tweets = send_get_request(url)
+    result.extend(tweets)
+    while len(tweets):
+        min_id = min(tweet['id'] for tweet in tweets)
+        print(min_id)
+        url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=200&screen_name={}&max_id={}&trim_user=false&include_rts=false".format(username, min_id - 1)
+        tweets = send_get_request(url)
+        result.extend(tweets)
+    print(len(result))
+    return result
+
+
+@cli.command()
+@click.option('--username', required=True, help="")
+@click.option('--output_dir', default='./output/', help="")
+@click.option('--log_path',
+              default='./download_user_tweet_images.log',
+              help="Path to output logging's log.")
+def download_user_tweet_images(username, output_dir, log_path):
+    logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
+    os.makedirs(output_dir, exist_ok=True)
+
+    image_urls = []
+
+    tweets = get_tweets(username)
+    for tweet in tweets:
+        medias = tweet.get('extended_entities', {}).get('media', [])
+        for media in medias:
+            media_type = media.get('type', '')
+            if media_type != 'photo':
+                print('Unsupport media type: {}, tweet url: {}'.format(media_type, media['url']))
+                continue
             image_urls.append(media['media_url_https'])
 
     for image_url in image_urls:
