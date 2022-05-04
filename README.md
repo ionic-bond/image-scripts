@@ -1,1 +1,1 @@
-# ImageManager
+# Image scripts for twitter and pixiv
