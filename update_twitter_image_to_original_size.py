@@ -39,7 +39,8 @@ def check_image(file_dir, file_name):
         logging.error('{} ({}), {} ({})'.format(file_path, old_size, orig_image_url, new_size))
     if old_size >= new_size:
         return
-    logging.info('Replace {} ({}) with {} ({})'.format(file_path, old_size, orig_image_url, new_size))
+    logging.info('Replace {} ({}) with {} ({})'.format(file_path, old_size, orig_image_url,
+                                                       new_size))
     with open(file_path, "wb") as f:
         f.write(r.content)
 
@@ -55,9 +56,10 @@ def scan(scan_dir):
 
 @cli.command()
 @click.option('--scan_dir', default='./', help="")
-@click.option('--log_path',
-              default='./update_twitter_image_to_original_size.log',
-              help="Path to output logging's log.")
+@click.option(
+    '--log_path',
+    default='./update_twitter_image_to_original_size.log',
+    help="Path to output logging's log.")
 def check(scan_dir, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     scan(scan_dir)

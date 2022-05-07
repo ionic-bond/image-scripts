@@ -25,19 +25,21 @@ def get_proxies():
     return proxies
 
 
-def send_get_request(url: str, params: dict={}):
+def send_get_request(url: str, params: dict = {}):
     response = requests.request(
         "GET", url, headers=get_headers(), params=params, proxies=get_proxies())
     while response.status_code != 200:
-        logging.error("Request returned an error: {} {}".format(
-            response.status_code, response.text))
-        response = requests.request("GET", url, headers=get_headers(), params=params, proxies=get_proxies())
+        logging.error("Request returned an error: {} {}".format(response.status_code,
+                                                                response.text))
+        response = requests.request(
+            "GET", url, headers=get_headers(), params=params, proxies=get_proxies())
     return response.json()
 
 
 def get_favorite_tweets(username: str):
     result = []
-    url = "https://api.twitter.com/1.1/favorites/list.json?count=200&screen_name={}".format(username)
+    url = "https://api.twitter.com/1.1/favorites/list.json?count=200&screen_name={}".format(
+        username)
     favorite_tweets = send_get_request(url)
     result.extend(favorite_tweets)
     for _ in range(4):
@@ -45,7 +47,8 @@ def get_favorite_tweets(username: str):
             break
         min_id = min(favorite_tweet['id'] for favorite_tweet in favorite_tweets)
         print(min_id)
-        url = "https://api.twitter.com/1.1/favorites/list.json?count=200&screen_name={}&max_id={}".format(username, min_id - 1)
+        url = "https://api.twitter.com/1.1/favorites/list.json?count=200&screen_name={}&max_id={}".format(
+            username, min_id - 1)
         favorite_tweets = send_get_request(url)
         result.extend(favorite_tweets)
     print(len(result))
@@ -101,9 +104,8 @@ def get_existed_images(scan_dir: str):
 @click.option('--username', required=True, help="")
 @click.option('--output_dir', default='./output/', help="")
 @click.option('--scan_dirs', default='./', help="")
-@click.option('--log_path',
-              default='./download_user_like_images.log',
-              help="Path to output logging's log.")
+@click.option(
+    '--log_path', default='./download_user_like_images.log', help="Path to output logging's log.")
 def download_user_like_images(username, output_dir, scan_dirs, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
@@ -141,13 +143,15 @@ def download_user_like_images(username, output_dir, scan_dirs, log_path):
 
 def get_tweets(username: str):
     result = []
-    url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=200&screen_name={}&trim_user=false&include_rts=false".format(username)
+    url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=200&screen_name={}&trim_user=false&include_rts=false".format(
+        username)
     tweets = send_get_request(url)
     result.extend(tweets)
     while len(tweets):
         min_id = min(tweet['id'] for tweet in tweets)
         print(min_id)
-        url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=200&screen_name={}&max_id={}&trim_user=false&include_rts=false".format(username, min_id - 1)
+        url = "https://api.twitter.com/1.1/statuses/user_timeline.json?count=200&screen_name={}&max_id={}&trim_user=false&include_rts=false".format(
+            username, min_id - 1)
         tweets = send_get_request(url)
         result.extend(tweets)
     print(len(result))
@@ -157,9 +161,8 @@ def get_tweets(username: str):
 @cli.command()
 @click.option('--username', required=True, help="")
 @click.option('--output_dir', default='./output/', help="")
-@click.option('--log_path',
-              default='./download_user_tweet_images.log',
-              help="Path to output logging's log.")
+@click.option(
+    '--log_path', default='./download_user_tweet_images.log', help="Path to output logging's log.")
 def download_user_tweet_images(username, output_dir, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
