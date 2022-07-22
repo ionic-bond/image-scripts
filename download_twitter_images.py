@@ -26,13 +26,19 @@ def get_proxies():
 
 
 def send_get_request(url: str, params: dict = {}):
-    response = requests.request(
-        "GET", url, headers=get_headers(), params=params, proxies=get_proxies())
+    response = requests.request("GET",
+                                url,
+                                headers=get_headers(),
+                                params=params,
+                                proxies=get_proxies())
     while response.status_code != 200:
         logging.error("Request returned an error: {} {}".format(response.status_code,
                                                                 response.text))
-        response = requests.request(
-            "GET", url, headers=get_headers(), params=params, proxies=get_proxies())
+        response = requests.request("GET",
+                                    url,
+                                    headers=get_headers(),
+                                    params=params,
+                                    proxies=get_proxies())
     return response.json()
 
 
@@ -104,8 +110,9 @@ def get_existed_images(scan_dir: str):
 @click.option('--username', required=True, help="")
 @click.option('--output_dir', default='./output/', help="")
 @click.option('--scan_dirs', default='./', help="")
-@click.option(
-    '--log_path', default='./download_user_like_images.log', help="Path to output logging's log.")
+@click.option('--log_path',
+              default='./download_user_like_images.log',
+              help="Path to output logging's log.")
 def download_user_like_images(username, output_dir, scan_dirs, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
@@ -161,8 +168,9 @@ def get_tweets(username: str):
 @cli.command()
 @click.option('--username', required=True, help="")
 @click.option('--output_dir', default='./output/', help="")
-@click.option(
-    '--log_path', default='./download_user_tweet_images.log', help="Path to output logging's log.")
+@click.option('--log_path',
+              default='./download_user_tweet_images.log',
+              help="Path to output logging's log.")
 def download_user_tweet_images(username, output_dir, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
