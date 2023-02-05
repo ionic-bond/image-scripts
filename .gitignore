@@ -132,3 +132,4 @@ dmypy.json
 *.last_end_id
 *.log
 output/*
+*.processed_ids
