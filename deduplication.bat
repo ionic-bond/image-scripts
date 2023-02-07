@@ -1,1 +1,2 @@
-python.exe .\deduplication.py run --scan_dir Y:\Cache
+python .\deduplication.py run --scan_dir Y:\Cache
+pause

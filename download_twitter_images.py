@@ -69,7 +69,7 @@ def read_prossesed_ids(username: str):
         return processed_ids
     with open(filename, 'r') as f:
         for processed_id in f:
-            processed_ids.add(int(processed_id))
+            processed_ids.add(int(processed_id.rstrip('\r\n')))
     return processed_ids
 
 
