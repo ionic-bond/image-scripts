@@ -43,7 +43,7 @@ def _filter(img_list):
     if pximg_size:
         for img_path in img_list:
             if _is_twimg(img_path):
-                if os.path.getsize(img_path) < pximg_size:
+                if os.path.getsize(img_path) <= pximg_size:
                     os.remove(img_path)
                     print('removed {}'.format(img_path))
 
