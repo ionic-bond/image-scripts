@@ -110,10 +110,11 @@ def get_existed_images(scan_dir: str):
 @click.option('--username', required=True, help="")
 @click.option('--output_dir', default='./output/', help="")
 @click.option('--scan_dirs', default='./', help="")
+@click.option('--exclude_users', default='', help="")
 @click.option('--log_path',
               default='./download_user_like_images.log',
               help="Path to output logging's log.")
-def download_user_like_images(username, output_dir, scan_dirs, log_path):
+def download_user_like_images(username, output_dir, scan_dirs, exclude_users, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
 
@@ -125,10 +126,14 @@ def download_user_like_images(username, output_dir, scan_dirs, log_path):
         existed_images = existed_images | get_existed_images(scan_dir)
     logging.info('existed images num: {}'.format(len(existed_images)))
 
+    exclude_users = exclude_users.split(',') if exclude_users else []
+
     image_urls = []
 
     favorite_tweets = get_favorite_tweets(username)
     for favorite_tweet in favorite_tweets:
+        if favorite_tweet['user']['screen_name'] in exclude_users:
+            continue
         if favorite_tweet['id'] in processed_ids:
             continue
         write_processed_id(username, favorite_tweet['id'])
