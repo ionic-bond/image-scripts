@@ -133,3 +133,4 @@ dmypy.json
 *.log
 output/*
 *.processed_ids
+*.json

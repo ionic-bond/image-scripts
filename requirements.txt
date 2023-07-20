@@ -4,3 +4,4 @@ requests
 imagehash
 PixivPy3
 selenium
+tweepy_authlib

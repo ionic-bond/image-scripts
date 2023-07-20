@@ -4,7 +4,10 @@ import click
 import json
 import logging
 import os
+
 import requests
+from requests.cookies import RequestsCookieJar
+from tweepy_authlib import CookieSessionUserHandler
 
 
 @click.group()
@@ -12,9 +15,29 @@ def cli():
     pass
 
 
-def get_headers():
-    token = os.environ.get("BEARER_TOKEN")
-    return {"Authorization": "Bearer {}".format(token)}
+cookie_path = ''
+
+
+def get_auth_handler(username: str, password: str):
+    auth_handler = CookieSessionUserHandler(screen_name=username, password=password)
+    return auth_handler
+
+
+def dump_auth_handler(auth_handler: CookieSessionUserHandler, path: str):
+    cookies = auth_handler.get_cookies()
+    with open(path, 'w') as f:
+        json.dump(cookies.get_dict(), f, ensure_ascii=False, indent=4)
+
+
+def load_auth_handler(cookie_path: str) -> CookieSessionUserHandler:
+    assert os.path.exists(cookie_path)
+    with open(cookie_path, 'r') as f:
+        cookies_dict = json.load(f)
+    cookies = RequestsCookieJar()
+    for key, value in cookies_dict.items():
+        cookies.set(key, value)
+    auth_handler = CookieSessionUserHandler(cookies=cookies)
+    return auth_handler
 
 
 def get_proxies():
@@ -26,18 +49,19 @@ def get_proxies():
 
 
 def send_get_request(url: str, params: dict = {}):
+    auth_handler = load_auth_handler(cookie_path)
     response = requests.request("GET",
                                 url,
-                                headers=get_headers(),
                                 params=params,
+                                auth=auth_handler.apply_auth(),
                                 proxies=get_proxies())
     while response.status_code != 200:
         logging.error("Request returned an error: {} {}".format(response.status_code,
                                                                 response.text))
         response = requests.request("GET",
                                     url,
-                                    headers=get_headers(),
                                     params=params,
+                                    auth=auth_handler.apply_auth(),
                                     proxies=get_proxies())
     return response.json()
 
@@ -108,15 +132,19 @@ def get_existed_images(scan_dir: str):
 
 @cli.command()
 @click.option('--username', required=True, help="")
+@click.option('--auth_cookie_path', required=True)
 @click.option('--output_dir', default='./output/', help="")
 @click.option('--scan_dirs', default='./', help="")
 @click.option('--exclude_users', default='', help="")
 @click.option('--log_path',
               default='./download_user_like_images.log',
               help="Path to output logging's log.")
-def download_user_like_images(username, output_dir, scan_dirs, exclude_users, log_path):
+def download_user_like_images(username, auth_cookie_path, output_dir, scan_dirs, exclude_users, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
+
+    global cookie_path
+    cookie_path = auth_cookie_path
 
     processed_ids = read_prossesed_ids(username)
     logging.info('Processed ids num: {}'.format(len(processed_ids)))
@@ -172,13 +200,17 @@ def get_tweets(username: str):
 
 @cli.command()
 @click.option('--username', required=True, help="")
+@click.option('--auth_cookie_path', required=True)
 @click.option('--output_dir', default='./output/', help="")
 @click.option('--log_path',
               default='./download_user_tweet_images.log',
               help="Path to output logging's log.")
-def download_user_tweet_images(username, output_dir, log_path):
+def download_user_tweet_images(username, auth_cookie_path, output_dir, log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
+
+    global cookie_path
+    cookie_path = auth_cookie_path
 
     image_urls = []
 
@@ -194,6 +226,16 @@ def download_user_tweet_images(username, output_dir, log_path):
 
     for image_url in image_urls:
         download_image(output_dir, image_url)
+
+
+@cli.command()
+@click.option('--username', required=True)
+@click.option('--password', required=True)
+def generate_auth_cookie(username, password):
+    auth_handler = get_auth_handler(username, password)
+    dump_path = '{}.json'.format(username)
+    dump_auth_handler(auth_handler, dump_path)
+    print('Saved to {}'.format(dump_path))
 
 
 if __name__ == "__main__":
