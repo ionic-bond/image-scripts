@@ -139,7 +139,8 @@ def get_existed_images(scan_dir: str):
 @click.option('--log_path',
               default='./download_user_like_images.log',
               help="Path to output logging's log.")
-def download_user_like_images(username, auth_cookie_path, output_dir, scan_dirs, exclude_users, log_path):
+def download_user_like_images(username, auth_cookie_path, output_dir, scan_dirs, exclude_users,
+                              log_path):
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
 
