@@ -117,11 +117,7 @@ def send_get_request(api_name: str, params: dict = {}):
     url, _, headers, features = GraphqlAPI.get_api_data(api_name)
     headers = get_headers(headers, cookies)
     params = build_params({"variables": params, "features": features})
-    response = requests.request("GET",
-                                url,
-                                params=params,
-                                headers=headers,
-                                proxies=get_proxies())
+    response = requests.request("GET", url, params=params, headers=headers, proxies=get_proxies())
     while response.status_code != 200:
         logging.error("Request returned an error: {} {}".format(response.status_code,
                                                                 response.text))
