@@ -46,6 +46,17 @@ def get_user_bookmarks_illust(api, user_id):
     return result
 
 
+def get_user_illust(api, user_id):
+    result = []
+    page_result = api.user_illusts(user_id, type="illust")
+    result.extend(page_result['illusts'])
+    while page_result['next_url']:
+        next_qs = api.parse_qs(page_result['next_url'])
+        assert next_qs
+        page_result = api.user_illusts(**next_qs)
+    return result
+
+
 def get_image_urls_from_illust(illust):
     assert illust['meta_single_page'] or illust['meta_pages']
     assert not (illust['meta_single_page'] and illust['meta_pages'])
@@ -138,6 +149,24 @@ def download_user_bookmarks_images(user_id, output_dir, scan_dirs, log_path):
 
     for image_url in image_urls:
         download_image(output_dir, image_url)
+
+
+@cli.command()
+@click.option('--user_id', required=True, help="")
+@click.option('--output_dir', default='./output/', help="")
+@click.option('--log_path',
+              default='./download_user_images.log',
+              help="Path to output logging's log.")
+def download_user_images(user_id, output_dir, log_path):
+    logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
+    os.makedirs(output_dir, exist_ok=True)
+
+    api = get_api()
+    illusts = get_user_illust(api, user_id)
+    for illust in illusts:
+        urls = get_image_urls_from_illust(illust)
+        for url in urls:
+            download_image(output_dir, url)
 
 
 if __name__ == "__main__":
