@@ -46,6 +46,15 @@ def _filter(img_list):
                 if os.path.getsize(img_path) <= pximg_size:
                     os.remove(img_path)
                     print('removed {}'.format(img_path))
+    else:
+        max_id = 0
+        for i in range(len(img_list)):
+            if os.path.getsize(img_list[i]) > os.path.getsize(img_list[max_id]):
+                max_id = i
+        for i in range(len(img_list)):
+            if i != max_id:
+                os.remove(img_list[i])
+                print('removed {}'.format(img_list[i]))
 
 
 @cli.command()
