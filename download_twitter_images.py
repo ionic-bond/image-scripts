@@ -8,10 +8,9 @@ import time
 from collections import deque
 
 import requests
-from requests.cookies import RequestsCookieJar
-from tweepy_authlib import CookieSessionUserHandler
 
 from graphql_api import GraphqlAPI
+from login import login
 
 
 @click.group()
@@ -20,28 +19,6 @@ def cli():
 
 
 cookie_path = ''
-
-
-def get_auth_handler(username: str, password: str):
-    auth_handler = CookieSessionUserHandler(screen_name=username, password=password)
-    return auth_handler
-
-
-def dump_auth_handler(auth_handler: CookieSessionUserHandler, path: str):
-    cookies = auth_handler.get_cookies()
-    with open(path, 'w') as f:
-        json.dump(cookies.get_dict(), f, ensure_ascii=False, indent=4)
-
-
-def load_auth_handler(cookie_path: str) -> CookieSessionUserHandler:
-    assert os.path.exists(cookie_path)
-    with open(cookie_path, 'r') as f:
-        cookies_dict = json.load(f)
-    cookies = RequestsCookieJar()
-    for key, value in cookies_dict.items():
-        cookies.set(key, value)
-    auth_handler = CookieSessionUserHandler(cookies=cookies)
-    return auth_handler
 
 
 def get_proxies():
@@ -218,8 +195,6 @@ def download_user_like_images(username, auth_cookie_path, output_dir, scan_dirs,
     logging.basicConfig(filename=log_path, format='%(asctime)s - %(message)s', level=logging.INFO)
     os.makedirs(output_dir, exist_ok=True)
 
-    GraphqlAPI.init()
-
     global cookie_path
     cookie_path = auth_cookie_path
 
@@ -297,8 +272,6 @@ def download_user_tweet_images(username, auth_cookie_path, output_dir, log_path)
     global cookie_path
     cookie_path = auth_cookie_path
 
-    GraphqlAPI.init()
-
     image_urls = []
 
     tweets = get_tweets(username)
@@ -322,9 +295,11 @@ def download_user_tweet_images(username, auth_cookie_path, output_dir, log_path)
 @click.option('--username', required=True)
 @click.option('--password', required=True)
 def generate_auth_cookie(username, password):
-    auth_handler = get_auth_handler(username, password)
+    client = login(username=username, password=password)
+    cookies = client.cookies
     dump_path = '{}.json'.format(username)
-    dump_auth_handler(auth_handler, dump_path)
+    with open(dump_path, 'w') as f:
+        f.write(json.dumps(dict(cookies), indent=2))
     print('Saved to {}'.format(dump_path))
 
 

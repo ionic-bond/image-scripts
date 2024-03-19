@@ -45,3 +45,6 @@ class GraphqlAPI():
 
         api_data = cls.graphql_api_data[api_name]
         return api_data['url'], api_data['method'], cls.headers, api_data['features']
+
+
+GraphqlAPI.init()
