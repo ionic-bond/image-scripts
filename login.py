@@ -20,7 +20,8 @@ def update_token(client: Client, key: str, url: str, **kwargs) -> Client:
 
         for task in info.get('subtasks', []):
             if task.get('enter_text', {}).get('keyboard_type') == 'email':
-                client.cookies.set('confirm_email', 'true')  # signal that email challenge must be solved
+                client.cookies.set('confirm_email',
+                                   'true')  # signal that email challenge must be solved
 
             if task.get('subtask_id') == 'LoginAcid':
                 if task['enter_text']['hint_text'].casefold() == 'confirmation code':
@@ -30,7 +31,8 @@ def update_token(client: Client, key: str, url: str, **kwargs) -> Client:
         client.cookies.set(key, info[key])
 
     except KeyError as e:
-        client.cookies.set('flow_errors', 'true')  # signal that an error occurred somewhere in the flow
+        client.cookies.set('flow_errors',
+                           'true')  # signal that an error occurred somewhere in the flow
         print(f'[error] failed to update token at {caller_name}\n{e}')
     return client
 
@@ -169,7 +171,9 @@ def solve_confirmation_challenge(client: Client, **kwargs) -> Client:
 
 def execute_login_flow(client: Client, **kwargs) -> Client | None:
     client = init_guest_token(client)
-    for fn in [flow_start, flow_instrumentation, flow_username, flow_password, flow_duplication_check]:
+    for fn in [
+            flow_start, flow_instrumentation, flow_username, flow_password, flow_duplication_check
+    ]:
         client = fn(client)
 
     # solve email challenge
@@ -179,9 +183,11 @@ def execute_login_flow(client: Client, **kwargs) -> Client | None:
     # solve confirmation challenge (Proton Mail only)
     if client.cookies.get('confirmation_code') == 'true':
         if not kwargs.get('proton'):
-            print(f'[warning] Please check your email for a confirmation code'
-                  f' and log in again using the web app. If you wish to automatically solve'
-                  f' email confirmation challenges, add a Proton Mail account in your account settings')
+            print(
+                f'[warning] Please check your email for a confirmation code'
+                f' and log in again using the web app. If you wish to automatically solve'
+                f' email confirmation challenges, add a Proton Mail account in your account settings'
+            )
             return
         client = solve_confirmation_challenge(client, **kwargs)
     return client
