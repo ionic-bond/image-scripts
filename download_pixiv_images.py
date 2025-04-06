@@ -43,6 +43,7 @@ def get_user_bookmarks_illust(api, user_id):
         next_qs = api.parse_qs(page_result['next_url'])
         assert next_qs
         page_result = api.user_bookmarks_illust(**next_qs)
+        result.extend(page_result['illusts'])
     return result
 
 
@@ -54,6 +55,7 @@ def get_user_illust(api, user_id):
         next_qs = api.parse_qs(page_result['next_url'])
         assert next_qs
         page_result = api.user_illusts(**next_qs)
+        result.extend(page_result['illusts'])
     return result
 
 
