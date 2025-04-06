@@ -92,10 +92,15 @@ def download_image(output_dir: str, image_url: str):
         return
     print('Downloading image {} to {}'.format(image_url, output_path))
     logging.info('Downloading image {} to {}'.format(image_url, output_path))
-    r = requests.get(image_url,
-                     proxies=get_proxies(),
-                     headers={'Referer': 'https://www.pixiv.net/',
-                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'})
+    r = requests.get(
+        image_url,
+        proxies=get_proxies(),
+        headers={
+            'Referer':
+                'https://www.pixiv.net/',
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
+        })
     with open(output_path, "wb") as f:
         f.write(r.content)
 
