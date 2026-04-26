@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import pixivpy3
+import re
 import requests
 
 
@@ -86,8 +87,12 @@ def write_processed_id(username: str, processed_id: int):
         f.write('{}\n'.format(str(processed_id)))
 
 
+def strip_filename_hash(filename):
+    return re.sub(r'(\d+)-[a-f0-9]{20,}(_p)', r'\1\2', filename)
+
+
 def download_image(output_dir: str, image_url: str):
-    filename = image_url.split('/')[-1]
+    filename = strip_filename_hash(image_url.split('/')[-1])
     output_path = os.path.join(output_dir, filename)
     if os.path.exists(output_path):
         logging.warning('{} already exists, skip.'.format(output_path))
@@ -116,7 +121,7 @@ def get_existed_images(scan_dir: str):
         else:
             splits = file_name.split('.')
             if len(splits) == 2 and splits[1] in ['jpg', 'png'] and '_p' in splits[0]:
-                existed_images.add(file_name)
+                existed_images.add(strip_filename_hash(file_name))
     return existed_images
 
 
@@ -146,7 +151,7 @@ def download_user_bookmarks_images(user_id, output_dir, scan_dirs, log_path):
     for illust in illusts:
         urls = get_image_urls_from_illust(illust)
         for url in urls:
-            image_file_name = url.split('/')[-1]
+            image_file_name = strip_filename_hash(url.split('/')[-1])
             image_id = image_file_name.split('.')[0]
             if image_id in processed_ids:
                 continue
